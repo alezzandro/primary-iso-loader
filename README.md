@@ -14,11 +14,25 @@ The same bootloader also starts a Red Hat Enterprise Linux installation DVD.
 
 Assisted Installer documentation for OpenShift Container Platform 4: [Installing OpenShift Container Platform with the Assisted Installer](https://docs.redhat.com/en/documentation/assisted_installer_for_openshift_container_platform/2026/html/installing_openshift_container_platform_with_the_assisted_installer/index).
 
+## First boot prints the MAC address
+
+The Assisted Installer host inventory pairs each machine with its NIC MAC address. On a cloud instance that address is assigned when the instance is created, and the public IP is attached to the same NIC. You need both before the discovery agent starts, so the installer can match the host to the address you entered.
+
+Boot the instance once with only `primary-boot.qcow2` attached. GRUB does not find an ISO, so it prints the virtio NIC address and waits:
+
+```text
+No discovery or installation ISO found.
+Attach the ISO and reboot.
+MAC address: 52:54:00:ab:cd:ef
+```
+
+Copy that address into the Assisted Installer and map it to the public IP of the instance. Then attach the discovery ISO and reboot. The MAC screen is only shown when the ISO is absent. The next boot loads the discovery menu.
+
 ## Import the image
 
 1. Import `primary-boot.qcow2` with UEFI firmware. Leave Secure Boot disabled. The GRUB binary in this image is not enrolled with Secure Boot.
-2. Create the instance from that image. Do not boot the instance from the discovery ISO.
-3. Start it once before attaching the ISO if you need the NIC hardware address for the Assisted Installer inventory. The console prints `MAC address:` and waits.
+2. Create the instance from that image and attach its public IP. Do not boot the instance from the discovery ISO.
+3. Start it and read `MAC address:` from the console. Enter that MAC in the Assisted Installer, mapped to the public IP.
 4. Attach the discovery ISO as a non-boot CD or second volume, then reboot.
 5. The console should show the discovery menu. In the Assisted Installer, select the 120 GiB disk as the installation disk.
 
