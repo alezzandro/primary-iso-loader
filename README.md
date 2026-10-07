@@ -33,10 +33,29 @@ Copy that address into the Assisted Installer and map it to the public IP of the
 1. Import `primary-boot.qcow2` with UEFI firmware. Leave Secure Boot disabled. The GRUB binary in this image is not enrolled with Secure Boot.
 2. Create the instance from that image and attach its public IP. Do not boot the instance from the discovery ISO.
 3. Start it and read `MAC address:` from the console. Enter that MAC in the Assisted Installer, mapped to the public IP.
-4. Attach the discovery ISO as a non-boot CD or second volume, then reboot.
-5. The console should show the discovery menu. In the Assisted Installer, select the 120 GiB disk as the installation disk.
+4. Snapshot the instance primary disk while it still holds only the bootloader. If the installation fails, restore that snapshot and install again from scratch.
+5. Attach the discovery ISO as a non-boot CD or second volume, then reboot.
+6. The console should show the discovery menu. In the Assisted Installer, select the 120 GiB disk as the installation disk.
 
 The firmware must present the ISO as `cd0`. The configuration reconnects PCI and SCSI devices first, because some firmware connects only the boot disk. A later CD is ignored.
+
+## If the installation fails
+
+Restore the primary-disk snapshot from the step above, attach the discovery ISO again, and reboot. The instance returns to the bootloader disk, so the installation can start from scratch.
+
+If there is no snapshot, the firmware boots the Red Hat Enterprise Linux CoreOS GRUB menu on the primary disk. Keep the discovery ISO attached as a non-boot CD. At that menu, press `c` to open the GRUB command line, then enter:
+
+```text
+insmod iso9660
+insmod connectefi
+connectefi pciroot
+connectefi scsi
+
+set root=(cd0)
+configfile /EFI/redhat/grub.cfg
+```
+
+`iso9660` reads the ISO filesystem. `connectefi` connects PCI and SCSI devices so the attached ISO appears as `cd0`. The last command loads the ISO GRUB configuration and returns to the discovery menu.
 
 ## Rebuild
 
